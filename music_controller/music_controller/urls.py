@@ -19,5 +19,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('api.urls'))
+    path('api/', include('api.urls')), #backend urls
+    path('', include('frontend.urls')) #forward-facing urls for frontend(what the user sees)
+
 ]
