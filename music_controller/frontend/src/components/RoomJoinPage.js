@@ -85,4 +85,4 @@ class RoomJoinPage extends Component {
     }
 }
 
-export default withRouter(RoomJoinPage)
+export default withRouter(RoomJoinPage);
