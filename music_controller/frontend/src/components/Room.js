@@ -1,7 +1,7 @@
 // Room.js
 import React, { Component } from "react";
-import { withRouter } from "./withRouter"; // Import the withRouter utility
-
+import {Grid, Button, Typography } from '@material-ui/core';
+import { useParams, useNavigate } from "react-router-dom"; //these hooks get reed of the router.
 class Room extends Component {
     constructor(props) {
         super(props);
@@ -10,15 +10,22 @@ class Room extends Component {
             guestCanPause: false,
             isHost: false,
         };
-        // Access the route parameters from props.router.params
-        this.roomCode = this.props.router.params.roomCode;
+        this.getRoomDetails = this.getRoomDetails.bind(this);
+        this.leaveButtonPressed = this.leaveButtonPressed.bind(this);
+    }
+
+    componentDidMount(){
         this.getRoomDetails();
     }
 
     getRoomDetails() {
-        fetch('/api/get-room' + '?code=' + this.roomCode).then((res) => 
-        res.json()
-        ).then((data) => {
+        return fetch('/api/get-room' + '?code=' + this.props.roomCode).then((res) => {
+            if (!res.ok) {
+                this.props.leaveRoomCallback();
+                this.props.navigate('/');
+            }
+            return res.json();
+        }).then((data) => {
             this.setState({
                 votesToSkip: data.votes_to_skip,
                 guestCanPause: data.guest_can_pause,
@@ -27,16 +34,54 @@ class Room extends Component {
         });
     }
 
+    leaveButtonPressed() {
+        const requestOptions = {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+        };
+        fetch('/api/leave-room', requestOptions). then((_response) => {
+            this.props.leaveRoomCallback();
+            this.props.navigate('/');
+        });
+    }
+
     render() {
         return (
-            <div>
-                <h3>{this.roomCode}</h3>
-                <p>Votes: {this.state.votesToSkip}</p>
-                <p>Guest Can Pause: {this.state.guestCanPause.toString()}</p>
-                <p>Host: {this.state.isHost.toString()}</p>
-            </div>
-        );
+            <Grid container spacing={1}>
+                <Grid item xs={12} align='center'>
+                    <Typography variant="h4" component='h4'>
+                        Code: {this.props.roomCode}
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} align='center'>
+                <Typography variant="h6" component='h6'>
+                        Votes: {this.state.votesToSkip}
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} align='center'>
+                <Typography variant="h6" component='h6'>
+                        Guest Can Pause: {this.state.guestCanPause.toString()}
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} align='center'>
+                <Typography variant="h6" component='h6'>
+                        Host: {this.state.isHost.toString()}
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} align='center'>
+                <Button 
+                    variant = 'contained'
+                    color="secondary"
+                    onClick={this.leaveButtonPressed}
+                    > Leave Room </Button>
+                </Grid>
+            </Grid>
+            );
     }
 }
 
-export default withRouter(Room); // Export the component wrapped with withRouter
+export default (props) => {
+    const { roomCode } = useParams();
+    const navigate = useNavigate();
+    return <Room {...props} roomCode={roomCode} navigate={navigate} />;
+}; //use props and hooks to do the job of router.
