@@ -10,24 +10,24 @@ class Room extends Component {
             votesToSkip: 2,
             guestCanPause: false,
             isHost: false,
-            showSettings: false
+            showSettings: false,
         };
         this.getRoomDetails = this.getRoomDetails.bind(this);
         this.leaveButtonPressed = this.leaveButtonPressed.bind(this);
         this.updateShowSettings = this.updateShowSettings.bind(this);
         this.renderSettingsButton = this.renderSettingsButton.bind(this);
         this.renderSettings = this.renderSettings.bind(this);
-
-
-
-    }
-
-    componentDidMount(){
+        this.getRoomDetails = this.getRoomDetails.bind(this);
         this.getRoomDetails();
     }
 
+    /* componentDidMount(){
+        this.getRoomDetails();
+    } 
+    */
+
     getRoomDetails() {
-        return fetch('/api/get-room' + '?code=' + this.props.roomCode).then((res) => {
+        return fetch('/api/get-room?code=' + this.props.roomCode).then((res) => {
             if (!res.ok) {
                 this.props.leaveRoomCallback();
                 this.props.navigate('/');
@@ -68,7 +68,7 @@ class Room extends Component {
                         votesToSkip={this.state.votesToSkip} 
                         guestCanPause={this.state.guestCanPause} 
                         roomCode={this.roomCode} 
-                        //updateCallback={} 
+                        updateCallback={this.getRoomDetails} 
                     />
                 </Grid>
                 <Grid item xs={12} align='center'>
