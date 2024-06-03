@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import {Grid, Button, Typography } from '@material-ui/core';
 import { useParams, useNavigate } from "react-router-dom"; //these hooks get reed of the router.
 import CreateRoomPage from "./CreateRoomPage";
+import MusicPlayer from "./MusicPlayer";
 class Room extends Component {
     constructor(props) {
         super(props);
@@ -12,6 +13,7 @@ class Room extends Component {
             isHost: false,
             showSettings: false,
             spotifyAuthenticated: false,
+            song: {}
         };
         this.getRoomDetails = this.getRoomDetails.bind(this);
         this.leaveButtonPressed = this.leaveButtonPressed.bind(this);
@@ -20,7 +22,17 @@ class Room extends Component {
         this.renderSettings = this.renderSettings.bind(this);
         this.getRoomDetails = this.getRoomDetails.bind(this);
         this.authenticateSpotify = this.authenticateSpotify.bind(this);
+        this.getCurrentSong = this.getCurrentSong.bind(this);
         this.getRoomDetails(); 
+        this.getCurrentSong();
+    }
+
+    componentDidMount() {
+        this.interval = setInterval(this.getCurrentSong, 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.interval);
     }
 
     getRoomDetails() {
@@ -51,6 +63,20 @@ class Room extends Component {
                 })
             }
         })
+    }
+
+    getCurrentSong() {
+        fetch('/spotify/currently-playing').then((res) => {
+            if (!res.ok) {
+                return {};
+            } else {
+                return res.json();
+            }
+        })
+        .then((data) => {
+            this.setState({song: data});
+            console.log(data);
+        });
     }
 
     leaveButtonPressed() {
@@ -108,21 +134,8 @@ class Room extends Component {
                         Code: {this.props.roomCode}
                     </Typography>
                 </Grid>
-                <Grid item xs={12} align='center'>
-                <Typography variant="h6" component='h6'>
-                        Votes: {this.state.votesToSkip}
-                    </Typography>
-                </Grid>
-                <Grid item xs={12} align='center'>
-                <Typography variant="h6" component='h6'>
-                        Guest Can Pause: {this.state.guestCanPause.toString()}
-                    </Typography>
-                </Grid>
-                <Grid item xs={12} align='center'>
-                <Typography variant="h6" component='h6'>
-                        Host: {this.state.isHost.toString()}
-                    </Typography>
-                </Grid>
+                <MusicPlayer {...this.state.song} />
+                {this.state.song}
                 {this.state.isHost ? this.renderSettingsButton() : null}
                 <Grid item xs={12} align='center'>
                 <Button 
