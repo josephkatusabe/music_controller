@@ -1,19 +1,14 @@
-// withRouter.js
-import React from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import React from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 
+//scoping function
 export function withRouter(Component) {
-    function ComponentWithRouterProp(props) {
-        let location = useLocation();
-        let navigate = useNavigate();
-        let params = useParams();
-        return (
-            <Component
-                {...props}
-                router={{ location, navigate, params }}
-            />
-        );
-    }
+  function ComponentWithRouterProp(props) {
+    let navigate = useNavigate();
+    let location = useLocation();
+    let params = useParams();
+    return <Component {...props} router={{ navigate, location, params }} />;
+  }
 
-    return ComponentWithRouterProp;
+  return ComponentWithRouterProp;
 }

@@ -12,13 +12,13 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import { withRouter } from "./withRouter";
 import { Collapse } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
+import withRoomCode from "./withRoomCode"; // Import the HOC
 
 class CreateRoomPage extends Component {
     static defaultProps = {
         votesToSkip: 2,
         guestCanPause: true,
         update: false,
-        roomCode: 'UQHTJT',
         updateCallback: () => {},
     };
 
@@ -36,7 +36,7 @@ class CreateRoomPage extends Component {
         this.handleGuestsCanPauseChange = this.handleGuestsCanPauseChange.bind(this);
         this.handleUpdateButtonPressed = this.handleUpdateButtonPressed.bind(this);
     }
-    
+
     handleVotesChange(e) {
         this.setState({
             votesToSkip: e.target.value,
@@ -70,7 +70,7 @@ class CreateRoomPage extends Component {
             body: JSON.stringify({
                 votes_to_skip: this.state.votesToSkip,
                 guest_can_pause: this.state.guestCanPause,
-                code: this.state.roomCode,
+                code: this.props.roomCode, // Use roomCode from props
             }),
         };
         fetch("/api/update-room", requestOptions)
@@ -129,7 +129,7 @@ class CreateRoomPage extends Component {
     }
 
     render() {
-        const title = this.props.update ? "Update Room" : "Create a Room"; //dynamic title
+        const title = this.props.update ? "Update Room" : "Create a Room"; // Dynamic title
 
         return (
             <Grid container spacing={1}>
@@ -215,4 +215,4 @@ class CreateRoomPage extends Component {
     }
 }
 
-export default withRouter(CreateRoomPage);
+export default withRoomCode(withRouter(CreateRoomPage));

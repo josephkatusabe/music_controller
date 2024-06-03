@@ -20,6 +20,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')), #backend urls
-    path('', include('frontend.urls')) #forward-facing urls for frontend(what the user sees)
-
+    path('', include('frontend.urls')), #forward-facing urls for frontend(what the user sees)
+    path('spotify/', include('spotify.urls')) 
 ]

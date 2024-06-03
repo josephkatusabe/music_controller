@@ -33,7 +33,6 @@ class RoomJoinPage extends Component {
                         variant = 'outlined'
                         onChange = {this.handleTextFieldChange}
                         />
-        
                 </Grid>
 
                 <Grid item xs={12} align='center'>
