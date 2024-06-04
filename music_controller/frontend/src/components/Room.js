@@ -1,156 +1,140 @@
-// Room.js
-import React, { Component } from "react";
-import {Grid, Button, Typography } from '@material-ui/core';
-import { useParams, useNavigate } from "react-router-dom"; //these hooks get reed of the router.
+import React, { useState, useEffect } from "react";
+import { Grid, Button, Typography } from '@material-ui/core';
+import { useParams, useNavigate } from "react-router-dom";
 import CreateRoomPage from "./CreateRoomPage";
 import MusicPlayer from "./MusicPlayer";
-class Room extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            votesToSkip: 2,
-            guestCanPause: false,
-            isHost: false,
-            showSettings: false,
-            spotifyAuthenticated: false,
-            song: {}
-        };
-        this.getRoomDetails = this.getRoomDetails.bind(this);
-        this.leaveButtonPressed = this.leaveButtonPressed.bind(this);
-        this.updateShowSettings = this.updateShowSettings.bind(this);
-        this.renderSettingsButton = this.renderSettingsButton.bind(this);
-        this.renderSettings = this.renderSettings.bind(this);
-        this.getRoomDetails = this.getRoomDetails.bind(this);
-        this.authenticateSpotify = this.authenticateSpotify.bind(this);
-        this.getCurrentSong = this.getCurrentSong.bind(this);
-        this.getRoomDetails(); 
-        this.getCurrentSong();
-    }
 
-    componentDidMount() {
-        this.interval = setInterval(this.getCurrentSong, 1000);
-    }
+const Room = (props) => {
+    const [votesToSkip, setVotesToSkip] = useState(2);
+    const [guestCanPause, setGuestCanPause] = useState(false);
+    const [isHost, setIsHost] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
+    const [song, setSong] = useState({});
+    const { roomCode } = useParams();
+    const navigate = useNavigate();
 
-    componentWillUnmount() {
-        clearInterval(this.interval);
-    }
+    useEffect(() => {
+        getRoomDetails();
+        getCurrentSong();
+        const interval = setInterval(getCurrentSong, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
-    getRoomDetails() {
-        return fetch('/api/get-room?code=' + this.props.roomCode).then((res) => {
-            if (!res.ok) {
-                this.props.leaveRoomCallback();
-                this.props.navigate('/');
-            }
-            return res.json();
-        }).then((data) => {
-            this.setState({
-                votesToSkip: data.votes_to_skip,
-                guestCanPause: data.guest_can_pause,
-                isHost: data.is_host,
-            });
-            if (this.state.isHost){
-                this.authenticateSpotify()
-            } 
-        });
-    } 
-
-    authenticateSpotify() {
-        fetch('/spotify/is-authenticated').then((response) => response.json()).then((data) => {
-            this.setState({ spotifyAuthenticated: data.status});
-            if (!data.status) {
-                fetch('/spotify/get-auth-url').then((response) => response.json()).then((data) => {
-                    window.location.replace(data.url);
-                })
-            }
-        })
-    }
-
-    getCurrentSong() {
-        fetch('/spotify/currently-playing').then((res) => {
-            if (!res.ok) {
-                return {};
-            } else {
+    const getRoomDetails = () => {
+        fetch('/api/get-room?code=' + roomCode)
+            .then((res) => {
+                if (!res.ok) {
+                    props.leaveRoomCallback();
+                    navigate('/');
+                }
                 return res.json();
-            }
-        })
-        .then((data) => {
-            this.setState({song: data});
-            console.log(data);
-        });
-    }
+            })
+            .then((data) => {
+                setVotesToSkip(data.votes_to_skip);
+                setGuestCanPause(data.guest_can_pause);
+                setIsHost(data.is_host);
+                if (data.is_host) {
+                    authenticateSpotify();
+                }
+            });
+    };
 
-    leaveButtonPressed() {
+    const authenticateSpotify = () => {
+        fetch('/spotify/is-authenticated')
+            .then((response) => response.json())
+            .then((data) => {
+                setSpotifyAuthenticated(data.status);
+                if (!data.status) {
+                    fetch('/spotify/get-auth-url')
+                        .then((response) => response.json())
+                        .then((data) => {
+                            window.location.replace(data.url);
+                        });
+                }
+            });
+    };
+
+    const getCurrentSong = () => {
+        fetch('/spotify/currently-playing')
+            .then((res) => {
+                if (!res.ok) {
+                    return {};
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setSong(data);
+                console.log(data);
+            });
+    };
+
+    const leaveButtonPressed = () => {
         const requestOptions = {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
         };
-        fetch('/api/leave-room', requestOptions). then((_response) => {
-            this.props.leaveRoomCallback();
-            this.props.navigate('/');
+        fetch('/api/leave-room', requestOptions).then((_response) => {
+            props.leaveRoomCallback();
+            navigate('/');
         });
-    }
+    };
 
-    updateShowSettings(value) {
-        this.setState({
-            showSettings: value,
-        });
-    }
+    const updateShowSettings = (value) => {
+        setShowSettings(value);
+    };
 
-    renderSettings() {
+    const renderSettings = () => {
         return (
             <Grid container spacing={1}>
                 <Grid item xs={12} align='center'>
-                    <CreateRoomPage 
-                        update={true} 
-                        votesToSkip={this.state.votesToSkip} 
-                        guestCanPause={this.state.guestCanPause} 
-                        roomCode={this.roomCode} 
-                        updateCallback={this.getRoomDetails} 
+                    <CreateRoomPage
+                        update={true}
+                        votesToSkip={votesToSkip}
+                        guestCanPause={guestCanPause}
+                        roomCode={roomCode}
+                        updateCallback={getRoomDetails}
                     />
                 </Grid>
                 <Grid item xs={12} align='center'>
-                    <Button variant="contained" color="secondary" onClick={() => this.updateShowSettings(false)}>Close</Button>
+                    <Button variant="contained" color="secondary" onClick={() => updateShowSettings(false)}>Close</Button>
                 </Grid>
             </Grid>
-        )
-    }
-    //method to render settings button. Don't hard code it since it can only show if the user is host
-    renderSettingsButton() {
+        );
+    };
+
+    const renderSettingsButton = () => {
         return (
             <Grid item xs={12} align='center'>
-                <Button variant="contained" color="primary" onClick={() => this.updateShowSettings(true)}>Settings</Button>
+                <Button variant="contained" color="primary" onClick={() => updateShowSettings(true)}>Settings</Button>
             </Grid>
-        )
+        );
+    };
+
+    if (showSettings) {
+        return renderSettings();
     }
 
-    render() {
-        if (this.state.showSettings) {
-            return this.renderSettings();
-        }
-        return (
-            <Grid container spacing={1}>
-                <Grid item xs={12} align='center'>
-                    <Typography variant="h4" component='h4'>
-                        Code: {this.props.roomCode}
-                    </Typography>
-                </Grid>
-                <MusicPlayer {...this.state.song} />
-                {this.state.song}
-                {this.state.isHost ? this.renderSettingsButton() : null}
-                <Grid item xs={12} align='center'>
-                <Button 
-                    variant = 'contained'
+    return (
+        <Grid container spacing={1}>
+            <Grid item xs={12} align='center'>
+                <Typography variant="h4" component='h4'>
+                    Code: {roomCode}
+                </Typography>
+            </Grid>
+            <MusicPlayer {...song} is_playing={song.is_playing} />
+            {isHost ? renderSettingsButton() : null}
+            <Grid item xs={12} align='center'>
+                <Button
+                    variant='contained'
                     color="secondary"
-                    onClick={this.leaveButtonPressed}
-                    > Leave Room </Button>
-                </Grid>
+                    onClick={leaveButtonPressed}
+                >
+                    Leave Room
+                </Button>
             </Grid>
-            );
-    }
-}
+        </Grid>
+    );
+};
 
-export default (props) => {
-    const { roomCode } = useParams();
-    const navigate = useNavigate();
-    return <Room {...props} roomCode={roomCode} navigate={navigate} />;
-}; //use props and hooks to do the job of router.
+export default Room;
